@@ -65,12 +65,13 @@ services:
         condition: service_started
   # Groups raw spans into traces based on a time interval
   raw-spans-grouper:
-    image: hypertrace/raw-spans-grouper
+    image: traceableai-docker.jfrog.io/hypertrace/raw-spans-grouper:0.1.14-SNAPSHOT
     container_name: raw-spans-grouper
     environment:
       - SCHEMA_REGISTRY_URL=http://schema-registry:8081
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPAN_GROUPBY_SESSION_WINDOW_INTERVAL=10
+      - PRE_CREATE_TOPICS=true
     depends_on:
       schema-registry:
         condition: service_started
