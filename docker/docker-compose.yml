@@ -51,14 +51,13 @@ services:
         condition: service_healthy
   # Converts and normalizes incoming spans into Hypertrace format
   span-normalizer:
-    image: hypertrace/span-normalizer
+    image: traceableai-docker.jfrog.io/hypertrace/span-normalizer:0.1.18-SNAPSHOT
     container_name: span-normalizer
     environment:
       - SCHEMA_REGISTRY_URL=http://schema-registry:8081
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - DEFAULT_TENANT_ID=__default
-    volumes: &default-log-config
-      - ../docker/configs/log4j2.properties:/app/resources/log4j2.properties:ro
+      - PRE_CREATE_TOPICS=true
     depends_on:
       schema-registry:
         condition: service_started
@@ -72,7 +71,6 @@ services:
       - SCHEMA_REGISTRY_URL=http://schema-registry:8081
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPAN_GROUPBY_SESSION_WINDOW_INTERVAL=10
-    volumes: *default-log-config
     depends_on:
       schema-registry:
         condition: service_started
@@ -88,7 +86,8 @@ services:
       - ENTITY_SERVICE_HOST_CONFIG=hypertrace-federated-service
       - ENTITY_SERVICE_PORT_CONFIG=9001
       - KAFKA_SINK_TOPIC=enriched-structured-traces
-    volumes: *default-log-config
+    volumes: &default-log-config
+      - ../docker/configs/log4j2.properties:/app/resources/log4j2.properties:ro
     depends_on:
       kafka-zookeeper:
         condition: service_started
@@ -125,6 +124,10 @@ services:
         aliases:
           - kafka
           - zookeeper
+    ports:
+      - 9092:9092
+      - 2181:2181
+      - 19092:19092
   # Stores entities like API, service and backend
   mongo:
     image: hypertrace/mongodb:main
@@ -138,6 +141,8 @@ services:
         # Usually, Pinot is distributed, and clients connect to the controller
         aliases:
           - pinot-controller
+    ports:
+      - 9000:9000
     cpu_shares: 2048
     depends_on:
       kafka-zookeeper:
