@@ -1,0 +1,23 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-2019
+    steps:
+        - uses: actions/checkout@v1
+        - name: Switch docker to linux containers
+        run: |
+            & 'C:\Program Files\Docker\Docker\DockerCli.exe' -SwitchDaemon
+        - name: pull an up containers
+        run: |
+            cd ./docker
+            docker-compose -f docker-compose.yml -f docker-compose-zipkin-example.yml pull
+            (docker-compose -f docker-compose.yml -f docker-compose-zipkin-example.yml up -d) 
+        - name: run tests
+        shell: powershell.exe
+        run: |
+            .github/workflows/tests.sh
